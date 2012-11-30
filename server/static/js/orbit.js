@@ -15,6 +15,11 @@ var context;
 buffers = []
 var colors = []
 
+
+var colorFades = []
+
+var convolver;
+
   var my_sample_data = null;
 
 
@@ -53,7 +58,6 @@ var _decodeAudio = function(input) {
   var bigData;  // Joined up recording
   var buf;    // Playback buffer
   var source;   // Playback buffer node
-
 
 
 
@@ -194,8 +198,10 @@ socket.on('bang', function (event) {
                 var gain = context.createGainNode();
                 source.buffer = buf;
                 source.connect(gain);
-                gain.connect(context.destination);
-                source.noteOn(0);
+                // gain.connect(context.destination);
+                gain.connect(convolver);
+                convolver.connect(context.destination);
+                source.noteOn(context.currentTime);
             }
         }, delay);
     }
@@ -211,6 +217,14 @@ socket.on('bang', function (event) {
 //    // END_OF_DEBUG
 });
 
+function addColorFade(event) {
+    colorFades.push({
+        color: 360 * event.source / event.seqlength,
+        intensity: (1 - event.delaynorm),
+        startTime: Date.now()
+    })
+}
+
 function did_eventually_record_audio_data() {
     var buf = [123, 12, 12, 3, 2, 1, 3];
     socket.emit('upload_and_bang', { source:my_index, audiodata:buf });
@@ -223,36 +237,53 @@ function bang() {
 function draw() {
     webkitRequestAnimationFrame(draw);
 
-//    var orderedGains = _.sortBy(gainNodes, function(gainNode){ return gainNode.gain.value });
-//
-//    if ((orderedGains.length > 1) && orderedGains[length - 2].gain.value > 0)
-//    {
-//        $('body').css("backgroundColor",
-//            Color(
-//                {
-//                    hue: colors[_.indexOf(gainNodes, orderedGains[length - 1])],
-//                    saturation: 1,
-//                    value: orderedGains[length - 1].gain.value
-//                }).blend(Color(
-//                {
-//                    hue: colors[_.indexOf(gainNodes, orderedGains[length - 2])],
-//                    saturation: 1,
-//                    value: orderedGains[length - 2].gain.value
-//                }),
-//                orderedGains[length - 2].gain.value / (orderedGains[length - 2].gain.value + orderedGains[length - 1].gain.value)).toCSS() )
-//    }
-//    else if ((orderedGains.length == 1) && orderedGains[length - 1].gain.value > 0)
-//    {
-//        $('body').css("backgroundColor",
-//            Color({
-//                hue: colors[_.indexOf(gainNodes, orderedGains[length - 1])],
-//                saturation: 1,
-//                value: orderedGains[length - 1].gain.value}).toCSS())
-//    }
-//    else
-//    {
-//        $('body').css("backgroundColor", "#000000");
-//    }
+    var now = Date.now()
+    var len = colorFades.length
+    var colorFade
+    for (var i = 0; i < len; i++)
+    {
+        colorFade = colorFades[i]
+        colorFade.intensity -= 0.03;
+        if (colorFade.intensity <= 0)
+        {
+            colorFades.splice(i, 1)
+            i--;
+        }
+    }
+    colorFades = _.sortBy(colorFades, function(cf){ return cf.intensity; })
+    
+    if ((colorFades.length > 1) && colorFades[colorFades.length - 2].intensity > 0)
+    {
+        var mainColor = colorFades[colorFades.length - 1]
+        var secColor = colorFades[colorFades.length - 2]
+        $('body').css("backgroundColor",
+            Color(
+                {
+                    hue: mainColor.color,
+                    saturation: 1,
+                    value: mainColor.intensity
+                }).blend(Color(
+                {
+                    hue: secColor.color,
+                    saturation: 1,
+                    value: secColor.intensity
+                }),
+                secColor.intensity / (mainColor.intensity + secColor.intensity)).toCSS() )
+    }
+    else if ((colorFades.length == 1) && colorFades[colorFades.length - 1].gain.value > 0)
+    {
+        var mainColor = colorFades[colorFades.length - 1]
+
+        $('body').css("backgroundColor",
+            Color({
+                hue: mainColor.color,
+                saturation: 1,
+                value: mainColor.intensity}).toCSS())
+    }
+    else
+    {
+        $('body').css("backgroundColor", "#000000");
+    }
 }
 
 
@@ -337,6 +368,21 @@ window.onkeydown = function (event) {
 
 $(function () {
     context = new webkitAudioContext();
+
+    var request = new XMLHttpRequest();
+    request.open('GET', '/static/sounds/hall.wav', true);
+    request.responseType = 'arraybuffer';
+
+    // Decode asynchronously
+    request.onload = function() {
+        context.decodeAudioData(request.response, function(buffer) {
+            convolver = context.createConvolver();
+            convolver.buffer = buffer;
+            convolver.connect(context.destination);
+            console.log("conv buffer loaded");
+        });
+    }
+    request.send();
 //    bufferLoader = new BufferLoader(
 //        context,
 //        [
