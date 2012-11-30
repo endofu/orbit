@@ -2,20 +2,51 @@ var express = require('express')
     , app = express()
     , server = require('http').createServer(app)
     , io = require('socket.io').listen(server)
+    , fs = require('fs')
     , propagator = require('./propagator').Propagator;
 
-server.listen(8080);
+
+var myip = '127.0.0.1';
+
+var os=require('os');
+var ifaces=os.networkInterfaces();
+for (var dev in ifaces) {
+  var alias=0;
+  ifaces[dev].forEach(function(details){
+    if (details.family=='IPv4') {
+      console.log(dev, dev+(alias?':'+alias:''),details.address);
+      if (dev.substring(0,2)=='en')
+      	myip = details.address;
+      ++alias;
+    }
+  });
+}
+
+console.log('MY IP:', myip);
+
+
+
+
+server.listen(80);
 
 app.get('/', function (req, res) {
-  res.sendfile(__dirname + '/templates/index.html');
+	var c = fs.readFileSync(__dirname + '/templates/index.html', 'utf8');
+	c = c.toString().replace('{{serverip}}', myip);
+  c = c.toString().replace('{{serverip}}', myip);
+  res.setHeader('Content-Type', 'text/html');
+  res.end(c);
 });
 
 app.get('/debug', function (req, res) {
   res.sendfile(__dirname + '/templates/debug.html');
 });
 
-app.get('/performance', function (req, res) {
-  res.sendfile(__dirname + '/templates/performance.html');
+app.get('/play', function (req, res) {
+	var c = fs.readFileSync(__dirname + '/templates/performance.html', 'utf8');
+	c = c.toString().replace('{{serverip}}', myip);
+  c = c.toString().replace('{{serverip}}', myip);
+  res.setHeader('Content-Type', 'text/html');
+  res.end(c);
 });
 
 app.use(express.static(__dirname));
