@@ -20,14 +20,7 @@ var colorFades = []
 
 var convolver;
 
-  var my_sample_data = null;
-
-
-
-
-
-
-
+var my_sample_data = null;
 
 
 var _encodeAudio = function(input) {
