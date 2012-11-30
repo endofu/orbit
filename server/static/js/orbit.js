@@ -15,6 +15,8 @@ var context;
 buffers = []
 var colors = []
 
+var convolver;
+
   var my_sample_data = null;
 
 
@@ -194,8 +196,10 @@ socket.on('bang', function (event) {
                 var gain = context.createGainNode();
                 source.buffer = buf;
                 source.connect(gain);
-                gain.connect(context.destination);
-                source.noteOn(0);
+                // gain.connect(context.destination);
+                gain.connect(convolver);
+                convolver.connect(context.destination);
+                source.noteOn(context.currentTime);
             }
         }, delay);
     }
@@ -337,6 +341,21 @@ window.onkeydown = function (event) {
 
 $(function () {
     context = new webkitAudioContext();
+
+    var request = new XMLHttpRequest();
+    request.open('GET', '/static/sounds/hall.wav', true);
+    request.responseType = 'arraybuffer';
+
+    // Decode asynchronously
+    request.onload = function() {
+        context.decodeAudioData(request.response, function(buffer) {
+            convolver = context.createConvolver();
+            convolver.buffer = buffer;
+            convolver.connect(context.destination);
+            console.log("conv buffer loaded");
+        });
+    }
+    request.send();
 //    bufferLoader = new BufferLoader(
 //        context,
 //        [
