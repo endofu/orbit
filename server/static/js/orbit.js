@@ -5,7 +5,7 @@
  * Time: 13:50
  * To change this template use File | Settings | File Templates.
  */
-var socket = io.connect('http://localhost');
+var socket = io.connect('http://192.168.144.164');
 var Color = net.brehaut.Color;
 var my_index = -1;
 var circle_size = 0;
@@ -14,6 +14,58 @@ var circle_size = 0;
 var context;
 buffers = []
 var colors = []
+
+  var my_sample_data = null;
+
+
+
+
+
+
+
+
+
+var _encodeAudio = function(input) {
+  var s = [];
+  for (var i=0; i<input.length; i++)
+    s.push(Math.round(128 + 127 * input[i]));
+  return s;
+}
+
+var _decodeAudio = function(input) {
+    return input.map(function(x) { return x / 128.0 - 1.0; });
+}
+
+
+
+
+
+
+
+
+
+  var context;
+    var numSamples = 16384;
+    var passes = 2;
+    var totalSamples = numSamples * passes;
+    var numChannels = 1;
+  var recording = passes + 1;
+  var bigData;  // Joined up recording
+  var buf;    // Playback buffer
+  var source;   // Playback buffer node
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function BufferLoader(context, urlList, callback) {
     this.context = context;
@@ -102,34 +154,50 @@ socket.on('index', function (data) {
     }
     console.log('You\'re index ' + my_index + ' of ' + circle_size);
     $('#number').html(my_index + 1);
+
+    if (my_sample_data) {
+        // send my sound of count changed.
+        socket.emit('bang', {
+            source: my_index,
+            encodedAudio: my_sample_data.encodedAudio,
+            sampleRate: my_sample_data.sampleRate
+        });
+    }
 });
 
-socket.on('bang', function (data) {
-    console.log('Got bang from server', data);
-    if (data.to != my_index)
+socket.on('bang', function (event) {
+    console.log('Got bang from server', event);
+    if (event.to != my_index)
         return;
+
+    console.log('Got bang (for me) from server', event);
     // HANDLE THE ACTUAL TRIGGERING OF SOUND HERE, after delay ms
+
     var buf;
     if (event.encodedAudio) {
+        // we got updated audio
         var totalSamples = event.encodedAudio.length;
-        buf = context.createBuffer(1, totalSamples, context.sampleRate);
+        buf = context.createBuffer(1, totalSamples, event.sampleRate);
         var decoded = _decodeAudio(event.encodedAudio);
         buf.getChannelData(0).set(decoded);
         buffers[event.source] = buf
     }
-    else
-    {
-        buf = buffers[event.source];
-    }
 
-    if (buf && event.play)
-    {
-        var source = context.createBufferSource();
-
-        var gain = context.createGainNode();
-        source.buffer = buf;
-        source.connect(gain);
-        gain.connect(context.destination);
+    if(event.play == 1) {
+        console.log('we should play!', event);
+        var delay = event.delay * 1000;
+        setTimeout(function() {
+            console.log('fire sound!');
+            var buf = buffers[event.source];
+            if (buf) {
+                var source = context.createBufferSource();
+                var gain = context.createGainNode();
+                source.buffer = buf;
+                source.connect(gain);
+                gain.connect(context.destination);
+                source.noteOn(0);
+            }
+        }, delay);
     }
 
 //    // DEBUG
@@ -149,7 +217,7 @@ function did_eventually_record_audio_data() {
 }
 
 function bang() {
-    socket.emit('bang', { source:my_index, static_sample:1 });
+    socket.emit('bang', { source:my_index, play:1 });
 }
 
 function draw() {
@@ -186,6 +254,86 @@ function draw() {
 //        $('body').css("backgroundColor", "#000000");
 //    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// success callback when requesting audio input stream
+function init(stream) {
+  var mediaStreamSource = context.createMediaStreamSource( stream );
+  var scriptProcessor = context.createJavaScriptNode(numSamples, numChannels, numChannels);
+  scriptProcessor.onaudioprocess = process;
+
+  // Connect input to script processor
+  mediaStreamSource.connect( scriptProcessor);
+  scriptProcessor.connect(context.destination);
+}
+
+function process (event) {
+
+    if (recording < passes) {
+      var data = event.inputBuffer.getChannelData(0);
+
+      try {
+        bigData.set(data, numSamples*recording);
+      } catch(e) {
+        console.log(data.length, numSamples * recording, bigData.length);
+      }
+
+    } else if (recording === passes) {
+        console.log("upload + bang");
+        console.log(bigData);
+        var encoded = _encodeAudio(bigData);
+        console.log(encoded);
+        my_sample_data = {
+            encodedAudio: encoded,
+            sampleRate: context.sampleRate
+        };
+        socket.emit('bang', {
+            source: my_index,
+            encodedAudio: my_sample_data.encodedAudio,
+            sampleRate: my_sample_data.sampleRate,
+            play: 1
+        });
+    };
+    recording++;
+}
+
+function start_recording () {
+    console.log("recording!");
+    bigData = new Float32Array(new ArrayBuffer(totalSamples*4));
+    recording = 0;
+}
+
+navigator.webkitGetUserMedia( { audio: true }, init );
+
+window.onkeydown = function (event) {
+    if (event.keyCode === 32) {
+        start_recording();
+    };
+}
+
+
+
+
+
 
 $(function () {
     context = new webkitAudioContext();

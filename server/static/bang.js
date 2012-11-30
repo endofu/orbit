@@ -8,14 +8,14 @@ function Bang() {
 
 Bang.prototype.setBangHandler = function(handler) {
 	this.bangHandler = handler;
-}	
+}
 
 Bang.prototype.setIndexChangedHandler = function(handler) {
 	this.indexChangedHandler = handler;
 }
 
 Bang.prototype.start = function() {
- 	this.socket = io.connect('http://localhost');
+ 	this.socket = io.connect('http://192.168.144.164');
   this.socket.on('welcome', function (data) {
    	// console.log('We\'re in the game!', data);
   });

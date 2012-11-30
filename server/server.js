@@ -34,7 +34,7 @@ var propagate = function(event) {
 	console.log('propagate', event);
 	var type = event.type || -1;
 	console.log('type', type);
-	var fun = propagator.CircularRipple;
+	var fun = propagator.Linear;
 	console.log('call', fun, type, event.source, in_circle.length);
 	var order = fun(event.source, in_circle.length);
 	console.log('propagation order', order);
