@@ -10,53 +10,43 @@ div.bang { font-size: 200%; background-color: #5f5; }
 </style>
 
 <script src="/socket.io/socket.io.js"></script>
-
-<script type="text/javascript">
-
-  var socket = io.connect('http://localhost');
-
-  var my_index = -1;
-  var circle_size = 0;
-
-  socket.on('welcome', function (data) {
-    console.log('We\'re in the game!', data);
-  });
-
-  socket.on('index', function (data) {
-    console.log('Got index event', data);
-    my_index = data.index,
-    circle_size = data.size;
-   	console.log('You\'re index '+my_index+' of '+circle_size);
-   	document.getElementById('number').innerHTML = (my_index+1)+'/'+circle_size;
-  });
-
-  socket.on('bang', function (data) {
-  	console.log('Got bang from server', data);
-    if (data.to != my_index)
-      return;
-  	var delay = data.delay * 500;
-    // HANDLE THE ACTUAL TRIGGERING OF SOUND HERE, after delay ms
-  	document.getElementById('debug').innerHTML = 'Bang from #'+data.source+' with delay '+delay;
-  	setTimeout(function(){ document.getElementById('debug').className = 'bang'; }, delay);
-  	setTimeout(function(){ document.getElementById('debug').className = 'no-bang'; }, delay+200);
-	});
-
-  function did_eventually_record_audio_data() {
-  	var buf = [123,12,12,3,2,1,3];
-  	socket.emit('upload_and_bang', { source: my_index, audiodata:buf });
-  }
-
-  function bang() {
-  	socket.emit('bang', { source: my_index, static_sample: 1 });
-  }
-
-</script>
+<script src="/static/bang.js"></script>
 
 <a href="javascript:bang();">SEND BANG</a>
 
-<div id="debug" class="no-bang">
-NO EVENT YET...
-</div>
-
+<div id="debug" class="no-bang">NO EVENT YET...</div>
 <div id="number">??</div>
+
+<script type="text/javascript">
+
+var dummy = '';
+
+  var b = new Bang();
+
+  var el_debug = document.getElementById('debug');
+  var el_number = document.getElementById('number');
+
+  b.bangHandler = function(event) {
+    if (event.audiodata) {
+      // remember audio data
+    }
+    var delay = event.delay * 0;
+    // HANDLE THE ACTUAL TRIGGERING OF SOUND HERE, after delay ms
+    el_debug.innerHTML = 'Bang from #'+(event.source + 1)+' with delay '+delay;
+    setTimeout(function() { el_debug.className = 'bang'; }, delay);
+    setTimeout(function() { el_debug.className = 'no-bang'; }, delay + 200);
+  }
+
+  b.indexChangedHandler = function() {
+    el_number.innerHTML = (b.index + 1)+' of '+b.size;
+    // propagate my sound here
+  }
+
+  b.start();
+
+  function bang() {
+    b.bang({ static_sample: 1, data: dummy });
+  }
+
+</script>
 
