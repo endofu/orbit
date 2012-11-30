@@ -18,7 +18,7 @@ app.get('/performance', function (req, res) {
   res.sendfile(__dirname + '/templates/performance.html');
 });
 
-app.use(express.static(__dirname))
+app.use(express.static(__dirname));
 
 var in_circle = [];
 
