@@ -26,6 +26,7 @@ div.bang { font-size: 200%; background-color: #5f5; }
 
   var b = new Bang();
 
+  var my_sample_data = null;
   var user_samples = {};
 
   var el_debug = document.getElementById('debug');
@@ -41,34 +42,41 @@ div.bang { font-size: 200%; background-color: #5f5; }
       buf.getChannelData(0).set(decoded);
       user_samples[event.source] = buf;
     }
+    if (event.play == 1) {
+      var delay = event.delay * 1000;
+      el_debug.innerHTML = 'Bang from #'+(event.source + 1)+' with delay '+delay;
 
-    var delay = event.delay * 1000;
-    el_debug.innerHTML = 'Bang from #'+(event.source + 1)+' with delay '+delay;
-
-    var buf = user_samples[event.source];
-     setTimeout(function() {
-      if (buf) {
-        var source = context.createBufferSource();
-        source.buffer = buf;
-        source.connect(context.destination);
-        source.noteOn(0);
-      }
-      el_debug.className = 'bang';
-      setTimeout(function() {
-        el_debug.className = 'no-bang';
-      }, 200);
-    }, delay);
+      var buf = user_samples[event.source];
+        setTimeout(function() {
+        if (buf) {
+          var source = context.createBufferSource();
+          source.buffer = buf;
+          source.connect(context.destination);
+          source.noteOn(0);
+        }
+        el_debug.className = 'bang';
+        setTimeout(function() {
+          el_debug.className = 'no-bang';
+        }, 200);
+      }, delay);
+    }
   }
 
   b.indexChangedHandler = function() {
     el_number.innerHTML = (b.index + 1)+' of '+b.size;
     // propagate my sound here
+    if (my_sample_data) {
+      b.bang({
+        encodedAudio: my_sample_data.encodedAudio,
+        sample: my_sample_data.sampleRate
+      });
+    }
   }
 
   b.start();
 
   function bang() {
-    b.bang({ });
+    b.bang({ play: 1 });
   }
 
 
@@ -125,9 +133,19 @@ div.bang { font-size: 200%; background-color: #5f5; }
 
       console.log(bigData);
       var encoded = _encodeAudio(bigData);
+      my_sample = encoded;
       console.log(encoded);
 
-      b.bang({ encodedAudio: encoded, sampleRate: context.sampleRate });
+      my_sample_data = {
+        encodedAudio: encoded,
+        sampleRate: context.sampleRate
+      };
+
+      b.bang({
+        play: 1,
+        encodedAudio: my_sample_data.encodedAudio,
+        sample: my_sample_data.sampleRate
+      });
     };
     recording++;
   }
