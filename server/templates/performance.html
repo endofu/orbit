@@ -1,0 +1,18 @@
+<style>
+    div#number { font-size: 400%; }
+    div.no-bang { font-size: 200%; background-color: #ccc; }
+    div.bang { font-size: 200%; background-color: #5f5; }
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/js/orbit.js"></script>
+
+<h1 id="number">DEBUG</h1>
+<p><a href="/">LEAVE</a></p>
+<a href="javascript:bang();">SEND BANG</a>
+
+<div id="debug" class="no-bang">
+NO EVENT YET...
+</div>
+

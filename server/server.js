@@ -1,7 +1,8 @@
-var app = require('express')()
-  , server = require('http').createServer(app)
-  , io = require('socket.io').listen(server)
-  , propagator = require('./propagator').Propagator;
+var express = require('express')
+    , app = express()
+    , server = require('http').createServer(app)
+    , io = require('socket.io').listen(server)
+    , propagator = require('./propagator').Propagator;
 
 server.listen(8080);
 
@@ -12,6 +13,12 @@ app.get('/', function (req, res) {
 app.get('/debug', function (req, res) {
   res.sendfile(__dirname + '/templates/debug.html');
 });
+
+app.get('/performance', function (req, res) {
+  res.sendfile(__dirname + '/templates/performance.html');
+});
+
+app.use(express.static(__dirname))
 
 var in_circle = [];
 
