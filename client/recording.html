@@ -2,22 +2,72 @@
 <head>
 	<title>Recording</title>
 	<script type="text/javascript">
+	var context;
+    var numSamples = 16384;
+    var passes = 2;
+    var totalSamples = numSamples * passes;
+    var numChannels = 1;
+	var recording = passes + 1;
+	var bigData;	// Joined up recording
+	var buf;		// Playback buffer
+	var source;		// Playback buffer node
 
 	// success callback when requesting audio input stream
-	function gotStream(stream) {
-	    var audioContext = new webkitAudioContext();
+	function init(stream) {
+	    context = new webkitAudioContext();
+	    var mediaStreamSource = context.createMediaStreamSource( stream );
+	    var scriptProcessor = context.createJavaScriptNode(numSamples, numChannels, numChannels);
+	    scriptProcessor.onaudioprocess = process;
 
-	    // Create an AudioNode from the stream.
-	    var mediaStreamSource = audioContext.createMediaStreamSource( stream );
-
-	    // Connect it to the destination to hear yourself (or any other node for processing!)
-	    mediaStreamSource.connect( audioContext.destination );
+	    // Connect input to script processor
+	    mediaStreamSource.connect( scriptProcessor);
+	    scriptProcessor.connect(context.destination);
 	}
 
-	navigator.webkitGetUserMedia( {audio:true}, gotStream );
+	function process (event) {
+
+		if (recording < passes) {
+			var data = event.inputBuffer.getChannelData(0);
+
+			try {
+				bigData.set(data, numSamples*recording);
+			} catch(e) {
+				console.log(data.length, numSamples * recording, bigData.length);
+			}
+
+		} else if (recording === passes) {
+			console.log("playing back");
+			// console.log(bigData);
+			source = context.createBufferSource();
+			buf = context.createBuffer(1, totalSamples, context.sampleRate);
+			buf.getChannelData(0).set(bigData);
+
+			source.buffer = buf;
+
+			source.connect(context.destination);
+			source.noteOn(totalSamples/context.sampleRate);
+		};
+		recording++;
+	}
+
+	function start_recording () {
+		console.log("recording!");
+		bigData = new Float32Array(new ArrayBuffer(totalSamples*4));
+
+		recording = 0;
+	}
+
+	navigator.webkitGetUserMedia( {audio:true}, init );
+
+	window.onkeydown = function (event) {
+		if (event.keyCode === 32) {
+			start_recording();
+		};
+	}
 	</script>
 </head>
 <body>
 
+	<input type="button" value="start" onclick="start_recording();">
 </body>
 </html>
