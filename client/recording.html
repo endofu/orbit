@@ -2,15 +2,16 @@
 <head>
 	<title>Recording</title>
 	<script type="text/javascript">
+    var numSamples = 16384;
+    var sampleRate = 44100;
+    var numChannels = 1;
+	var context;
 	var recording = false;
 	var data; // Array of recording data
 
 	// success callback when requesting audio input stream
 	function init(stream) {
-	    var context = new webkitAudioContext();
-	    var numSamples = 16384;
-	    var sampleRate = 44100;
-	    var numChannels = 1;
+	    context = new webkitAudioContext();
 	    // Create an AudioNode from the stream.
 	    var mediaStreamSource = context.createMediaStreamSource( stream );
 	    // Storage
@@ -25,15 +26,37 @@
 
 	function process (event) {
 		if (recording) {
-			data = event.inputBuffer.getChannelData(0);
+			var data = event.inputBuffer.getChannelData(0);
 			recording = false;
-			console.log(data);
+			// console.log(event.inputBuffer.getChannelData(0));
+			create_playback_buffer(data);
 		};
 	}
 
 	function get_data () {
 		recording = true;
 	}
+
+	function create_playback_buffer (data) {
+		var arrayBuffer = new ArrayBuffer(numSamples);
+		var buf;
+
+		for (var i = 0; i < data.length; i++) {
+			arrayBuffer[i] = data[i];
+		};
+		console.log(arrayBuffer);
+		buf = context.decodeAudioData(arrayBuffer,
+			function (buffer) {
+				console.log('success');
+			},
+			function (buffer) {
+				console.log('fail');
+			});
+		// buf = context.createBuffer(arrayBuffer, false);
+		// console.log(buf);
+	}
+
+
 	navigator.webkitGetUserMedia( {audio:true}, init );
 
 	</script>
