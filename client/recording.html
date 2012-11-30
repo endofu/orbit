@@ -27,9 +27,24 @@
 	function process (event) {
 		if (recording) {
 			var data = event.inputBuffer.getChannelData(0);
+			var arrayBuffer = new ArrayBuffer(numSamples);
+			var source;
+			var buf;
+
+			for (var i = 0; i < data.length; i++) {
+				arrayBuffer[i] = data[i];
+			};
+
+			source = context.createBufferSource();
+			buf = context.createBuffer(1, numSamples, sampleRate);
+			buf.getChannelData(0).set(data);
+
+			source.buffer = buf;
+
+			source.connect(context.destination);
+			source.noteOn(1);
+
 			recording = false;
-			// console.log(event.inputBuffer.getChannelData(0));
-			create_playback_buffer(data);
 		};
 	}
 
@@ -39,19 +54,21 @@
 
 	function create_playback_buffer (data) {
 		var arrayBuffer = new ArrayBuffer(numSamples);
-		var buf;
+		var buf = audioContext.createBuffer(1, numSamples, sampleRate);
 
-		for (var i = 0; i < data.length; i++) {
-			arrayBuffer[i] = data[i];
-		};
-		console.log(arrayBuffer);
-		buf = context.decodeAudioData(arrayBuffer,
-			function (buffer) {
-				console.log('success');
-			},
-			function (buffer) {
-				console.log('fail');
-			});
+		buf.getChannelData(0).set();
+
+		// for (var i = 0; i < data.length; i++) {
+		// 	arrayBuffer[i] = data[i];
+		// };
+		// console.log(arrayBuffer);
+		// buf = context.decodeAudioData(arrayBuffer,
+		// 	function (buffer) {
+		// 		console.log('success');
+		// 	},
+		// 	function (buffer) {
+		// 		console.log('fail');
+		// 	});
 		// buf = context.createBuffer(arrayBuffer, false);
 		// console.log(buf);
 	}
