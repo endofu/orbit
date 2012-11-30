@@ -2,22 +2,44 @@
 <head>
 	<title>Recording</title>
 	<script type="text/javascript">
+	var recording = false;
+	var data; // Array of recording data
 
 	// success callback when requesting audio input stream
-	function gotStream(stream) {
-	    var audioContext = new webkitAudioContext();
-
+	function init(stream) {
+	    var context = new webkitAudioContext();
+	    var numSamples = 16384;
+	    var sampleRate = 44100;
+	    var numChannels = 1;
 	    // Create an AudioNode from the stream.
-	    var mediaStreamSource = audioContext.createMediaStreamSource( stream );
+	    var mediaStreamSource = context.createMediaStreamSource( stream );
+	    // Storage
+	    // createJavaScriptNode will be deprecated for createScriptProcessor
+	    var scriptProcessor = context.createJavaScriptNode(numSamples, numChannels, numChannels);
+	    scriptProcessor.onaudioprocess = process;
 
-	    // Connect it to the destination to hear yourself (or any other node for processing!)
-	    mediaStreamSource.connect( audioContext.destination );
+	    // Connect input to script processor
+	    mediaStreamSource.connect( scriptProcessor);
+	    scriptProcessor.connect(context.destination);
 	}
 
-	navigator.webkitGetUserMedia( {audio:true}, gotStream );
+	function process (event) {
+		if (recording) {
+			data = event.inputBuffer.getChannelData(0);
+			recording = false;
+			console.log(data);
+		};
+	}
+
+	function get_data () {
+		recording = true;
+	}
+	navigator.webkitGetUserMedia( {audio:true}, init );
+
 	</script>
 </head>
 <body>
 
+	<input type="button" value="start" onclick="get_data();">
 </body>
 </html>
