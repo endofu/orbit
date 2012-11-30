@@ -51,8 +51,8 @@ var _encodeAudio = function(input) {
   return s;
 }
 
-var _decodeAudio = function(inputstring) {
-	return inputstring.split(',').map(function(x) { return parseInt( x ) / 128.0 - 1.0; });
+var _decodeAudio = function(input) {
+	return input.map(function(x) { return x / 128.0 - 1.0; });
 }
 
 

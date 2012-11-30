@@ -28,14 +28,25 @@ var dummy = '';
   var el_number = document.getElementById('number');
 
   b.bangHandler = function(event) {
-    if (event.audiodata) {
-      // remember audio data
+    console.log('got bang', event);
+    if (event.encodedAudio) {
+      var totalSamples = event.encodedAudio.length;
+      var source = context.createBufferSource();
+      var buf = context.createBuffer(1, totalSamples, context.sampleRate);
+      var decoded = _decodeAudio(event.encodedAudio);
+      console.log(decoded);
+      buf.getChannelData(0).set(decoded);
+      source.buffer = buf;
+      source.connect(context.destination);
+      source.noteOn(context.currentTime + event.delay * 1.0);
+      // event.delay / (b.size / 2)
     }
-    var delay = event.delay * 0;
+
+    var delay = event.delay * 500;
     // HANDLE THE ACTUAL TRIGGERING OF SOUND HERE, after delay ms
     el_debug.innerHTML = 'Bang from #'+(event.source + 1)+' with delay '+delay;
     setTimeout(function() { el_debug.className = 'bang'; }, delay);
-    setTimeout(function() { el_debug.className = 'no-bang'; }, delay + 200);
+    setTimeout(function() { el_debug.className = 'no-bang'; }, delay + 300);
   }
 
   b.indexChangedHandler = function() {
@@ -46,7 +57,7 @@ var dummy = '';
   b.start();
 
   function bang() {
-    b.bang({ static_sample: 1, data: dummy });
+    b.bang({ });
   }
 
 
@@ -100,24 +111,13 @@ var dummy = '';
       }
 
     } else if (recording === passes) {
-      console.log("playing back");
+      console.log("upload + bang");
 
       console.log(bigData);
       var encoded = _encodeAudio(bigData);
       console.log(encoded);
 
       b.bang({ encodedAudio: encoded });
-
-      /*
-      source = context.createBufferSource();
-      buf = context.createBuffer(1, totalSamples, context.sampleRate);
-      buf.getChannelData(0).set(bigData);
-
-      source.buffer = buf;
-
-      source.connect(context.destination);
-      source.noteOn(totalSamples/context.sampleRate);
-      */
     };
     recording++;
   }
