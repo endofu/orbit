@@ -278,7 +278,7 @@ function draw() {
     }
     else
     {
-        $('body').css("backgroundColor", "#333333");
+        $('body').css("backgroundColor", "#000000");
     }
 }
 
