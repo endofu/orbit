@@ -264,7 +264,7 @@ function draw() {
                 }),
                 secColor.intensity / (mainColor.intensity + secColor.intensity)).toCSS() )
     }
-    else if ((colorFades.length == 1) && colorFades[colorFades.length - 1].gain.value > 0)
+    else if ((colorFades.length == 1) && colorFades[colorFades.length - 1].intensity > 0)
     {
         var mainColor = colorFades[colorFades.length - 1]
 
