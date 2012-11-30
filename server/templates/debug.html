@@ -20,9 +20,13 @@ div.bang { font-size: 200%; background-color: #5f5; }
 
 <script type="text/javascript">
 
-var dummy = '';
+  var context = new webkitAudioContext();
+
+  var dummy = '';
 
   var b = new Bang();
+
+  var user_samples = {};
 
   var el_debug = document.getElementById('debug');
   var el_number = document.getElementById('number');
@@ -31,22 +35,29 @@ var dummy = '';
     console.log('got bang', event);
     if (event.encodedAudio) {
       var totalSamples = event.encodedAudio.length;
-      var source = context.createBufferSource();
-      var buf = context.createBuffer(1, totalSamples, context.sampleRate);
+      var buf = context.createBuffer(1, totalSamples, event.sampleRate);
       var decoded = _decodeAudio(event.encodedAudio);
       console.log(decoded);
       buf.getChannelData(0).set(decoded);
-      source.buffer = buf;
-      source.connect(context.destination);
-      source.noteOn(context.currentTime + event.delay * 1.0);
-      // event.delay / (b.size / 2)
+      user_samples[event.source] = buf;
     }
 
-    var delay = event.delay * 500;
-    // HANDLE THE ACTUAL TRIGGERING OF SOUND HERE, after delay ms
+    var delay = event.delay * 1000;
     el_debug.innerHTML = 'Bang from #'+(event.source + 1)+' with delay '+delay;
-    setTimeout(function() { el_debug.className = 'bang'; }, delay);
-    setTimeout(function() { el_debug.className = 'no-bang'; }, delay + 300);
+
+    var buf = user_samples[event.source];
+     setTimeout(function() {
+      if (buf) {
+        var source = context.createBufferSource();
+        source.buffer = buf;
+        source.connect(context.destination);
+        source.noteOn(0);
+      }
+      el_debug.className = 'bang';
+      setTimeout(function() {
+        el_debug.className = 'no-bang';
+      }, 200);
+    }, delay);
   }
 
   b.indexChangedHandler = function() {
@@ -89,7 +100,6 @@ var dummy = '';
 
   // success callback when requesting audio input stream
   function init(stream) {
-      context = new webkitAudioContext();
       var mediaStreamSource = context.createMediaStreamSource( stream );
       var scriptProcessor = context.createJavaScriptNode(numSamples, numChannels, numChannels);
       scriptProcessor.onaudioprocess = process;
@@ -117,7 +127,7 @@ var dummy = '';
       var encoded = _encodeAudio(bigData);
       console.log(encoded);
 
-      b.bang({ encodedAudio: encoded });
+      b.bang({ encodedAudio: encoded, sampleRate: context.sampleRate });
     };
     recording++;
   }

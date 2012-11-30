@@ -21,6 +21,7 @@ app.get('/performance', function (req, res) {
 app.use(express.static(__dirname));
 
 var in_circle = [];
+var samplebuffers = {};
 
 var recircle = function() {
 	console.log('reindex circle');
