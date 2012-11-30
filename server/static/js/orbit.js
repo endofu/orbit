@@ -182,7 +182,7 @@ socket.on('bang', function (event) {
 
     if(event.play == 1) {
         console.log('we should play!', event);
-        var delay = event.delay * 1000;
+        var delay = event.delay * 333;
         setTimeout(function() {
             console.log('fire sound!');
             var buf = buffers[event.source];
@@ -192,12 +192,13 @@ socket.on('bang', function (event) {
                 source.buffer = buf;
                 source.connect(gain);
                 // gain.connect(context.destination);
+                gain.gain.value = 1.0 - event.delaynorm * event.delaynorm;
                 gain.connect(convolver);
                 convolver.connect(context.destination);
                 source.noteOn(0);
             }
+            addColorFade(event);
         }, delay);
-        addColorFade(event);
     }
 
 //    // DEBUG

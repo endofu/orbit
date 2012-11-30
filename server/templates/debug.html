@@ -43,7 +43,7 @@ div.bang { font-size: 200%; background-color: #5f5; }
       user_samples[event.source] = buf;
     }
     if (event.play == 1) {
-      var delay = event.delay * 1000;
+      var delay = event.delay * 400;
       el_debug.innerHTML = 'Bang from #'+(event.source + 1)+' with delay '+delay;
 
       var buf = user_samples[event.source];

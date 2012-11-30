@@ -1,5 +1,8 @@
 <style>
-    div#number { font-size: 400%; }
+ a {
+ 	 color: #ff0;
+ }
+    h1#number { font-size: 1000%; color: #fff; }
     div.no-bang { font-size: 200%; background-color: #ccc; }
     div.bang { font-size: 200%; background-color: #5f5; }
 </style>
@@ -12,13 +15,12 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/static/js/orbit.js"></script>
 
-<h1 id="number">DEBUG</h1>
-
 <!--<p><a href="/">LEAVE</a></p>-->
 
 <a href="javascript:bang();">SEND BANG</a>
 <a href="javascript:start_recording();">START RECORDING</a>
 
+<h1 id="number">DEBUG</h1>
 
-<div id="debug" class="no-bang">NO EVENT YET..</div>
+
 
