@@ -45,6 +45,8 @@ var propagate = function(event) {
 			var newevent = event;
 			newevent.to = idx;
 			newevent.delay = delay;
+			newevent.delaynorm = delay / order.length;
+			newevent.seqlength = order.length;
 			in_circle[idx].emit('bang', newevent);
 		});
 		delay++;
