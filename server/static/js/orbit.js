@@ -5,7 +5,7 @@
  * Time: 13:50
  * To change this template use File | Settings | File Templates.
  */
-var socket = io.connect('http://192.168.144.164');
+var socket = io.connect('http://'+SERVERIP);
 var Color = net.brehaut.Color;
 var my_index = -1;
 var circle_size = 0;
