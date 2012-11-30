@@ -13,6 +13,7 @@ div.bang { font-size: 200%; background-color: #5f5; }
 <script src="/static/bang.js"></script>
 
 <a href="javascript:bang();">SEND BANG</a>
+<input type="button" value="start" onclick="start_recording();">
 
 <div id="debug" class="no-bang">NO EVENT YET...</div>
 <div id="number">??</div>
@@ -47,6 +48,110 @@ var dummy = '';
   function bang() {
     b.bang({ static_sample: 1, data: dummy });
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  var context;
+    var numSamples = 16384;
+    var passes = 2;
+    var totalSamples = numSamples * passes;
+    var numChannels = 1;
+  var recording = passes + 1;
+  var bigData;  // Joined up recording
+  var buf;    // Playback buffer
+  var source;   // Playback buffer node
+
+  // success callback when requesting audio input stream
+  function init(stream) {
+      context = new webkitAudioContext();
+      var mediaStreamSource = context.createMediaStreamSource( stream );
+      var scriptProcessor = context.createJavaScriptNode(numSamples, numChannels, numChannels);
+      scriptProcessor.onaudioprocess = process;
+
+      // Connect input to script processor
+      mediaStreamSource.connect( scriptProcessor);
+      scriptProcessor.connect(context.destination);
+  }
+
+  function process (event) {
+
+    if (recording < passes) {
+      var data = event.inputBuffer.getChannelData(0);
+
+      try {
+        bigData.set(data, numSamples*recording);
+      } catch(e) {
+        console.log(data.length, numSamples * recording, bigData.length);
+      }
+
+    } else if (recording === passes) {
+      console.log("playing back");
+
+      console.log(bigData);
+      var encoded = _encodeAudio(bigData);
+      console.log(encoded);
+
+      b.bang({ encodedAudio: encoded });
+
+      /*
+      source = context.createBufferSource();
+      buf = context.createBuffer(1, totalSamples, context.sampleRate);
+      buf.getChannelData(0).set(bigData);
+
+      source.buffer = buf;
+
+      source.connect(context.destination);
+      source.noteOn(totalSamples/context.sampleRate);
+      */
+    };
+    recording++;
+  }
+
+  function start_recording () {
+    console.log("recording!");
+    bigData = new Float32Array(new ArrayBuffer(totalSamples*4));
+
+    recording = 0;
+  }
+
+  navigator.webkitGetUserMedia( {audio:true}, init );
+
+  window.onkeydown = function (event) {
+    if (event.keyCode === 32) {
+      start_recording();
+    };
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </script>
 

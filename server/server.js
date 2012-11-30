@@ -33,14 +33,22 @@ var propagate = function(event) {
 	console.log('propagate', event);
 	var type = event.type || -1;
 	console.log('type', type);
-	var order = propagator(type, event.source, in_circle.length);
+	var fun = propagator.CircularRipple;
+	console.log('call', fun, type, event.source, in_circle.length);
+	var order = fun(event.source, in_circle.length);
 	console.log('propagation order', order);
-	for (var i=0; i<order.length; i++) {
-		var newevent = event;
-		newevent.to = order[i];
-		newevent.delay = i;
-		in_circle[order[i]].emit('bang', newevent);
-	}
+	var delay = 0;
+	order.forEach(function(thisorder) {
+		console.log('emitting for delay='+delay);
+		thisorder.forEach(function(idx) {
+			console.log('emitting to',idx);
+			var newevent = event;
+			newevent.to = idx;
+			newevent.delay = delay;
+			in_circle[idx].emit('bang', newevent);
+		});
+		delay++;
+	})
 };
 
 io.sockets.on('connection', function (socket) {

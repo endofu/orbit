@@ -44,7 +44,11 @@ Bang.prototype.bang = function(event) {
 
 
 var _encodeAudio = function(input) {
-	return input.map(function(x) { return Math.round(128 + 127 * x); }).join(',');
+  var s = [];
+  for (var i=0; i<input.length; i++)
+    s.push(Math.round(128 + 127 * input[i]));
+  // var e = s.join(',');
+  return s;
 }
 
 var _decodeAudio = function(inputstring) {
