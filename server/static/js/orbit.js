@@ -243,6 +243,7 @@ function draw() {
         {
             colorFades.splice(i, 1)
             i--;
+            len--;
         }
     }
     colorFades = _.sortBy(colorFades, function(cf){ return cf.intensity; })
