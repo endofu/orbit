@@ -194,9 +194,10 @@ socket.on('bang', function (event) {
                 // gain.connect(context.destination);
                 gain.connect(convolver);
                 convolver.connect(context.destination);
-                source.noteOn(context.currentTime);
+                source.noteOn(0);
             }
         }, delay);
+        addColorFade(event);
     }
 
 //    // DEBUG
@@ -275,7 +276,7 @@ function draw() {
     }
     else
     {
-        $('body').css("backgroundColor", "#000000");
+        $('body').css("backgroundColor", "#333333");
     }
 }
 
