@@ -2,25 +2,20 @@
 <head>
 	<title>Recording</title>
 	<script type="text/javascript">
+	var context;
     var numSamples = 16384;
-    var sampleRate = 44100;
-    var passes = 10;
+    var passes = 2;
     var totalSamples = numSamples * passes;
     var numChannels = 1;
-	var context;
 	var recording = passes + 1;
-	var data; // Array of recording data
-	var bigData;
-	var buf;
-	var source;
+	var bigData;	// Joined up recording
+	var buf;		// Playback buffer
+	var source;		// Playback buffer node
 
 	// success callback when requesting audio input stream
 	function init(stream) {
 	    context = new webkitAudioContext();
-	    // Create an AudioNode from the stream.
 	    var mediaStreamSource = context.createMediaStreamSource( stream );
-	    // Storage
-	    // createJavaScriptNode will be deprecated for createScriptProcessor
 	    var scriptProcessor = context.createJavaScriptNode(numSamples, numChannels, numChannels);
 	    scriptProcessor.onaudioprocess = process;
 
@@ -42,8 +37,9 @@
 
 		} else if (recording === passes) {
 			console.log("playing back");
+			// console.log(bigData);
 			source = context.createBufferSource();
-			buf = context.createBuffer(1, totalSamples, sampleRate);
+			buf = context.createBuffer(1, totalSamples, context.sampleRate);
 			buf.getChannelData(0).set(bigData);
 
 			source.buffer = buf;
@@ -63,6 +59,11 @@
 
 	navigator.webkitGetUserMedia( {audio:true}, init );
 
+	window.onkeydown = function (event) {
+		if (event.keyCode === 32) {
+			start_recording();
+		};
+	}
 	</script>
 </head>
 <body>
