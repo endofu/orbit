@@ -4,10 +4,15 @@
 	<script type="text/javascript">
     var numSamples = 16384;
     var sampleRate = 44100;
+    var passes = 10;
+    var totalSamples = numSamples * passes;
     var numChannels = 1;
 	var context;
-	var recording = false;
+	var recording = passes + 1;
 	var data; // Array of recording data
+	var bigData;
+	var buf;
+	var source;
 
 	// success callback when requesting audio input stream
 	function init(stream) {
@@ -25,54 +30,36 @@
 	}
 
 	function process (event) {
-		if (recording) {
+
+		if (recording < passes) {
 			var data = event.inputBuffer.getChannelData(0);
-			var arrayBuffer = new ArrayBuffer(numSamples);
-			var source;
-			var buf;
 
-			for (var i = 0; i < data.length; i++) {
-				arrayBuffer[i] = data[i];
-			};
+			try {
+				bigData.set(data, numSamples*recording);
+			} catch(e) {
+				console.log(data.length, numSamples * recording, bigData.length);
+			}
 
+		} else if (recording === passes) {
+			console.log("playing back");
 			source = context.createBufferSource();
-			buf = context.createBuffer(1, numSamples, sampleRate);
-			buf.getChannelData(0).set(data);
+			buf = context.createBuffer(1, totalSamples, sampleRate);
+			buf.getChannelData(0).set(bigData);
 
 			source.buffer = buf;
 
 			source.connect(context.destination);
-			source.noteOn(1);
-
-			recording = false;
+			source.noteOn(totalSamples/context.sampleRate);
 		};
+		recording++;
 	}
 
-	function get_data () {
-		recording = true;
+	function start_recording () {
+		console.log("recording!");
+		bigData = new Float32Array(new ArrayBuffer(totalSamples*4));
+
+		recording = 0;
 	}
-
-	function create_playback_buffer (data) {
-		var arrayBuffer = new ArrayBuffer(numSamples);
-		var buf = audioContext.createBuffer(1, numSamples, sampleRate);
-
-		buf.getChannelData(0).set();
-
-		// for (var i = 0; i < data.length; i++) {
-		// 	arrayBuffer[i] = data[i];
-		// };
-		// console.log(arrayBuffer);
-		// buf = context.decodeAudioData(arrayBuffer,
-		// 	function (buffer) {
-		// 		console.log('success');
-		// 	},
-		// 	function (buffer) {
-		// 		console.log('fail');
-		// 	});
-		// buf = context.createBuffer(arrayBuffer, false);
-		// console.log(buf);
-	}
-
 
 	navigator.webkitGetUserMedia( {audio:true}, init );
 
@@ -80,6 +67,6 @@
 </head>
 <body>
 
-	<input type="button" value="start" onclick="get_data();">
+	<input type="button" value="start" onclick="start_recording();">
 </body>
 </html>
